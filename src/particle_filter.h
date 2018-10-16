@@ -9,11 +9,11 @@
 #ifndef PARTICLE_FILTER_H_
 #define PARTICLE_FILTER_H_
 
+#include <random>
 #include "helper_functions.h"
 
 struct Particle
 {
-
 	int id;
 	double x;
 	double y;
@@ -22,6 +22,17 @@ struct Particle
 	std::vector<int> associations;
 	std::vector<double> sense_x;
 	std::vector<double> sense_y;
+
+	Particle::Particle();
+
+	Particle::Particle(int id, double x, double y, double theta, double weight)
+	{
+		this->id = id;
+		this->x = x;
+		this->y = y;
+		this->theta = theta;
+		this->weight = weight;
+	}
 };
 
 class ParticleFilter
@@ -36,13 +47,19 @@ class ParticleFilter
 	// Vector of weights of all particles
 	std::vector<double> weights;
 
+	// Create Gaussian distribution to generate gaussian noise for x, y and theta
+	normal_distribution<double> gaussian_x = normal_distribution<double>(0.0, 0.3);  // GPS measurement uncertainty x [m]
+	normal_distribution<double> gaussian_y = normal_distribution<double>(0.0, 0.3);  // GPS measurement uncertainty y [m]
+	normal_distribution<double> gaussian_theta = normal_distribution<double>(0.0, 0.01);  // GPS measurement uncertainty theta [rad]
+	default_random_engine gen;
+
   public:
 	// Set of current particles
 	std::vector<Particle> particles;
 
 	// Constructor
 	// @param num_particles Number of particles
-	ParticleFilter() : num_particles(0), is_initialized(false) {}
+	ParticleFilter() : num_particles(10), is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}

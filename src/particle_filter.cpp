@@ -5,7 +5,6 @@
  *      Author: Tiffany Huang
  */
 
-#include <random>
 #include <algorithm>
 #include <iostream>
 #include <numeric>
@@ -25,6 +24,14 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		double noise_x = this->gaussian_x(gen);
+		double noise_y = this->gaussian_y(gen);
+		double noise_theta = this->gaussian_theta(gen);
+		this->weights.push_back(1.);
+		this->particles.push_back(Particle(i, x + noise_x, y + noise_y, theta + noise_theta, 1.));
+	}
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate)
