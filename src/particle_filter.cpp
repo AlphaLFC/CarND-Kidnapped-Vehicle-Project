@@ -18,7 +18,31 @@
 
 using namespace std;
 
-void ParticleFilter::init(double x, double y, double theta, double std[])
+ParticleFilter::ParticleFilter(int num_particles, double pos_std[])
+{
+	this->num_particles = num_particles;
+	this->gaussian_x = new normal_distribution<double>(0.0, 0.3);	  // GPS measurement uncertainty x [m]
+	this->gaussian_y = new normal_distribution<double>(0.0, 0.3);	  // GPS measurement uncertainty y [m]
+	this->gaussian_theta = new normal_distribution<double>(0.0, 0.01); // GPS measurement uncertainty theta [rad]
+}
+
+ParticleFilter::~ParticleFilter()
+{
+	if (this->gaussian_x != NULL)
+	{
+		delete this->gaussian_x;
+	}
+	if (this->gaussian_y != NULL)
+	{
+		delete this->gaussian_y;
+	}
+	if (this->gaussian_theta != NULL)
+	{
+		delete this->gaussian_theta;
+	}
+}
+
+void ParticleFilter::init(double x, double y, double theta)
 {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
@@ -26,20 +50,25 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 	for (int i = 0; i < this->num_particles; i++)
 	{
-		double noise_x = this->gaussian_x(gen);
-		double noise_y = this->gaussian_y(gen);
-		double noise_theta = this->gaussian_theta(gen);
+		double noise_x = (*this->gaussian_x)(gen);
+		double noise_y = (*this->gaussian_y)(gen);
+		double noise_theta = (*this->gaussian_theta)(gen);
 		this->weights.push_back(1.);
 		this->particles.push_back(Particle(i, x + noise_x, y + noise_y, theta + noise_theta, 1.));
 	}
 }
 
-void ParticleFilter::prediction(double delta_t, double std_pos[], double velocity, double yaw_rate)
+void ParticleFilter::prediction(double delta_t, double velocity, double yaw_rate)
 {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		this->particles[i].move(delta_t, velocity, yaw_rate);
+	}
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs> &observations)

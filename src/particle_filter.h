@@ -12,6 +12,7 @@
 #include <random>
 #include "helper_functions.h"
 
+
 struct Particle
 {
 	int id;
@@ -33,6 +34,11 @@ struct Particle
 		this->theta = theta;
 		this->weight = weight;
 	}
+
+	void move(double delta_t, double velocity, double yaw_rate)
+	{
+		this->x += velocity; // To be continoued
+	}
 };
 
 class ParticleFilter
@@ -48,9 +54,9 @@ class ParticleFilter
 	std::vector<double> weights;
 
 	// Create Gaussian distribution to generate gaussian noise for x, y and theta
-	normal_distribution<double> gaussian_x = normal_distribution<double>(0.0, 0.3);  // GPS measurement uncertainty x [m]
-	normal_distribution<double> gaussian_y = normal_distribution<double>(0.0, 0.3);  // GPS measurement uncertainty y [m]
-	normal_distribution<double> gaussian_theta = normal_distribution<double>(0.0, 0.01);  // GPS measurement uncertainty theta [rad]
+	normal_distribution<double> *gaussian_x;  // GPS measurement uncertainty x [m]
+	normal_distribution<double> *gaussian_y; // GPS measurement uncertainty y [m]
+	normal_distribution<double> *gaussian_theta;  // GPS measurement uncertainty theta [rad]
 	default_random_engine gen;
 
   public:
@@ -59,7 +65,7 @@ class ParticleFilter
 
 	// Constructor
 	// @param num_particles Number of particles
-	ParticleFilter() : num_particles(10), is_initialized(false) {}
+	ParticleFilter(int num_particles, double pos_std[]) : is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}
@@ -73,7 +79,7 @@ class ParticleFilter
 	 * @param std[] Array of dimension 3 [standard deviation of x [m], standard deviation of y [m]
 	 *   standard deviation of yaw [rad]]
 	 */
-	void init(double x, double y, double theta, double std[]);
+	void init(double x, double y, double theta);
 
 	/**
 	 * prediction Predicts the state for the next time step
@@ -84,7 +90,7 @@ class ParticleFilter
 	 * @param velocity Velocity of car from t to t+1 [m/s]
 	 * @param yaw_rate Yaw rate of car from t to t+1 [rad/s]
 	 */
-	void prediction(double delta_t, double std_pos[], double velocity, double yaw_rate);
+	void prediction(double delta_t, double velocity, double yaw_rate);
 
 	/**
 	 * dataAssociation Finds which observations correspond to which landmarks (likely by using
