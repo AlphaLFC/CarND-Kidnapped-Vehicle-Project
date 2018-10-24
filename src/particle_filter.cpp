@@ -21,39 +21,39 @@ using namespace std;
 ParticleFilter::ParticleFilter(int num_particles)
 {
 	this->num_particles = num_particles;
-	this->gaussian_x = NULL;
-	this->gaussian_y = NULL;
-	this->gaussian_theta = NULL;
+	// this->gaussian_x = NULL;
+	// this->gaussian_y = NULL;
+	// this->gaussian_theta = NULL;
 }
 
 ParticleFilter::~ParticleFilter()
 {
-	this->free_gaussians();
+	// this->free_gaussians();
 }
 
-void ParticleFilter::free_gaussians()
-{
-	if (this->gaussian_x != NULL)
-	{
-		delete this->gaussian_x;
-	}
-	if (this->gaussian_y != NULL)
-	{
-		delete this->gaussian_y;
-	}
-	if (this->gaussian_theta != NULL)
-	{
-		delete this->gaussian_theta;
-	}
-}
+// void ParticleFilter::free_gaussians()
+// {
+// 	if (this->gaussian_x != NULL)
+// 	{
+// 		delete this->gaussian_x;
+// 	}
+// 	if (this->gaussian_y != NULL)
+// 	{
+// 		delete this->gaussian_y;
+// 	}
+// 	if (this->gaussian_theta != NULL)
+// 	{
+// 		delete this->gaussian_theta;
+// 	}
+// }
 
-void ParticleFilter::update_pos_std(double pos_std[])
-{
-	this->free_gaussians();
-	this->gaussian_x = new normal_distribution<double>(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
-	this->gaussian_y = new normal_distribution<double>(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
-	this->gaussian_theta = new normal_distribution<double>(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
-}
+// void ParticleFilter::update_pos_std(double pos_std[])
+// {
+// 	this->free_gaussians();
+// 	this->gaussian_x = new normal_distribution<double>(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
+// 	this->gaussian_y = new normal_distribution<double>(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+// 	this->gaussian_theta = new normal_distribution<double>(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
+// }
 
 void ParticleFilter::init(double x, double y, double theta, double pos_std[])
 {
@@ -61,13 +61,18 @@ void ParticleFilter::init(double x, double y, double theta, double pos_std[])
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
-	this->update_pos_std(pos_std);
+	// this->update_pos_std(pos_std);
+
+	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
+	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+	normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
+	default_random_engine gen; 
 
 	for (int i = 0; i < this->num_particles; i++)
 	{
-		double noise_x = (*this->gaussian_x)(gen);
-		double noise_y = (*this->gaussian_y)(gen);
-		double noise_theta = (*this->gaussian_theta)(gen);
+		double noise_x = gaussian_x(gen);
+		double noise_y = gaussian_y(gen);
+		double noise_theta = gaussian_theta(gen);
 		this->weights.push_back(1.);
 		this->particles.push_back(Particle(i, x + noise_x, y + noise_y, theta + noise_theta, 1.));
 	}
@@ -79,11 +84,10 @@ void ParticleFilter::prediction(double delta_t, double pos_std[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-	this->update_pos_std(pos_std);
 	
 	for (int i = 0; i < this->num_particles; i++)
 	{
-		this->particles[i].move(delta_t, velocity, yaw_rate);
+		this->particles[i].move(delta_t, velocity, yaw_rate, pos_std);
 	}
 }
 

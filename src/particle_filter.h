@@ -34,11 +34,16 @@ struct Particle
 		this->weight = weight;
 	}
 
-	void move(double delta_t, double velocity, double yaw_rate)
+	void move(double delta_t, double velocity, double yaw_rate, double pos_std[])
 	{
-		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta));
-		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t));
-		this->theta += yaw_rate * delta_t;
+		normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
+		normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+		normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
+		default_random_engine gen; 
+
+		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta)) + gaussian_x(gen);
+		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t)) + gaussian_y(gen);
+		this->theta += yaw_rate * delta_t + gaussian_theta(gen);
 	}
 };
 
@@ -55,10 +60,10 @@ class ParticleFilter
 	std::vector<double> weights;
 
 	// Create Gaussian distribution to generate gaussian noise for x, y and theta
-	normal_distribution<double> *gaussian_x;	 // GPS measurement uncertainty x [m]
-	normal_distribution<double> *gaussian_y;	 // GPS measurement uncertainty y [m]
-	normal_distribution<double> *gaussian_theta; // GPS measurement uncertainty theta [rad]
-	default_random_engine gen;
+	// normal_distribution<double> *gaussian_x;	 // GPS measurement uncertainty x [m]
+	// normal_distribution<double> *gaussian_y;	 // GPS measurement uncertainty y [m]
+	// normal_distribution<double> *gaussian_theta; // GPS measurement uncertainty theta [rad]
+	// default_random_engine gen;
 
   public:
 	// Set of current particles
