@@ -34,13 +34,10 @@ struct Particle
 		this->weight = weight;
 	}
 
-	void move(double delta_t, double velocity, double yaw_rate, double pos_std[])
+	void move(double delta_t, double velocity, double yaw_rate, normal_distribution<double>& gaussian_x, 
+	          normal_distribution<double>& gaussian_y, normal_distribution<double>& gaussian_theta, 
+			  default_random_engine& gen)
 	{
-		normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
-		normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
-		normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
-		default_random_engine gen; 
-
 		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta)) + gaussian_x(gen);
 		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t)) + gaussian_y(gen);
 		this->theta += yaw_rate * delta_t + gaussian_theta(gen);

@@ -85,9 +85,14 @@ void ParticleFilter::prediction(double delta_t, double pos_std[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	
+	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
+	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+	normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
+	default_random_engine gen; 
+
 	for (int i = 0; i < this->num_particles; i++)
 	{
-		this->particles[i].move(delta_t, velocity, yaw_rate, pos_std);
+		this->particles[i].move(delta_t, velocity, yaw_rate, gaussian_x, gaussian_y, gaussian_theta, gen);
 	}
 }
 
