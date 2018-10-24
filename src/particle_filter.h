@@ -12,7 +12,6 @@
 #include <random>
 #include "helper_functions.h"
 
-
 struct Particle
 {
 	int id;
@@ -37,7 +36,9 @@ struct Particle
 
 	void move(double delta_t, double velocity, double yaw_rate)
 	{
-		this->x += velocity; // To be continoued
+		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta));
+		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t));
+		this->theta += yaw_rate * delta_t;
 	}
 };
 
@@ -54,9 +55,9 @@ class ParticleFilter
 	std::vector<double> weights;
 
 	// Create Gaussian distribution to generate gaussian noise for x, y and theta
-	normal_distribution<double> *gaussian_x;  // GPS measurement uncertainty x [m]
-	normal_distribution<double> *gaussian_y; // GPS measurement uncertainty y [m]
-	normal_distribution<double> *gaussian_theta;  // GPS measurement uncertainty theta [rad]
+	normal_distribution<double> *gaussian_x;	 // GPS measurement uncertainty x [m]
+	normal_distribution<double> *gaussian_y;	 // GPS measurement uncertainty y [m]
+	normal_distribution<double> *gaussian_theta; // GPS measurement uncertainty theta [rad]
 	default_random_engine gen;
 
   public:
@@ -65,7 +66,7 @@ class ParticleFilter
 
 	// Constructor
 	// @param num_particles Number of particles
-	ParticleFilter(int num_particles, double pos_std[]) : is_initialized(false) {}
+	ParticleFilter(int num_particles) : is_initialized(false) {}
 
 	// Destructor
 	~ParticleFilter() {}
@@ -79,7 +80,7 @@ class ParticleFilter
 	 * @param std[] Array of dimension 3 [standard deviation of x [m], standard deviation of y [m]
 	 *   standard deviation of yaw [rad]]
 	 */
-	void init(double x, double y, double theta);
+	void init(double x, double y, double theta, double pos_std[]);
 
 	/**
 	 * prediction Predicts the state for the next time step
@@ -90,7 +91,7 @@ class ParticleFilter
 	 * @param velocity Velocity of car from t to t+1 [m/s]
 	 * @param yaw_rate Yaw rate of car from t to t+1 [rad/s]
 	 */
-	void prediction(double delta_t, double velocity, double yaw_rate);
+	void prediction(double delta_t, double pos_std[], double velocity, double yaw_rate);
 
 	/**
 	 * dataAssociation Finds which observations correspond to which landmarks (likely by using
@@ -116,6 +117,18 @@ class ParticleFilter
 	 *   the new set of particles.
 	 */
 	void resample();
+
+	/**
+	 * Free the allocated memory for gaussians.
+	 */
+	void free_gaussians();
+
+	/**
+	 * Update the standard deviation of position.
+	 * @param pos_std[] Array of dimension 3 [standard deviation of x [m], standard deviation of y [m]
+	 *   standard deviation of yaw [rad]]
+	 */
+	void update_pos_std(double pos_std[]);
 
 	/*
 	 * Set a particles list of associations, along with the associations calculated world x,y coordinates

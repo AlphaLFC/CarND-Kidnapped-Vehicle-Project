@@ -18,15 +18,20 @@
 
 using namespace std;
 
-ParticleFilter::ParticleFilter(int num_particles, double pos_std[])
+ParticleFilter::ParticleFilter(int num_particles)
 {
 	this->num_particles = num_particles;
-	this->gaussian_x = new normal_distribution<double>(0.0, 0.3);	  // GPS measurement uncertainty x [m]
-	this->gaussian_y = new normal_distribution<double>(0.0, 0.3);	  // GPS measurement uncertainty y [m]
-	this->gaussian_theta = new normal_distribution<double>(0.0, 0.01); // GPS measurement uncertainty theta [rad]
+	this->gaussian_x = NULL;
+	this->gaussian_y = NULL;
+	this->gaussian_theta = NULL;
 }
 
 ParticleFilter::~ParticleFilter()
+{
+	this->free_gaussians();
+}
+
+void ParticleFilter::free_gaussians()
 {
 	if (this->gaussian_x != NULL)
 	{
@@ -42,12 +47,22 @@ ParticleFilter::~ParticleFilter()
 	}
 }
 
-void ParticleFilter::init(double x, double y, double theta)
+void ParticleFilter::update_pos_std(double pos_std[])
+{
+	this->free_gaussians();
+	this->gaussian_x = new normal_distribution<double>(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
+	this->gaussian_y = new normal_distribution<double>(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+	this->gaussian_theta = new normal_distribution<double>(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
+}
+
+void ParticleFilter::init(double x, double y, double theta, double pos_std[])
 {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1.
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
+	this->update_pos_std(pos_std);
+
 	for (int i = 0; i < this->num_particles; i++)
 	{
 		double noise_x = (*this->gaussian_x)(gen);
@@ -58,13 +73,14 @@ void ParticleFilter::init(double x, double y, double theta)
 	}
 }
 
-void ParticleFilter::prediction(double delta_t, double velocity, double yaw_rate)
+void ParticleFilter::prediction(double delta_t, double pos_std[], double velocity, double yaw_rate)
 {
 	// TODO: Add measurements to each particle and add random Gaussian noise.
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-
+	this->update_pos_std(pos_std);
+	
 	for (int i = 0; i < this->num_particles; i++)
 	{
 		this->particles[i].move(delta_t, velocity, yaw_rate);

@@ -35,6 +35,7 @@ int main()
   //Set up parameters here
   double delta_t = 0.1;     // Time elapsed between measurements [sec]
   double sensor_range = 50; // Sensor range [m]
+  int num_particles = 10;
 
   double sigma_pos[3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_landmark[2] = {0.3, 0.3};  // Landmark measurement uncertainty [x [m], y [m]]
@@ -48,7 +49,7 @@ int main()
   }
 
   // Create particle filter
-  ParticleFilter pf(sigma_pos);
+  ParticleFilter pf(num_particles);
 
   h.onMessage([&pf, &map, &delta_t, &sensor_range, &sigma_pos, &sigma_landmark](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -75,7 +76,7 @@ int main()
             double sense_y = std::stod(j[1]["sense_y"].get<std::string>());
             double sense_theta = std::stod(j[1]["sense_theta"].get<std::string>());
 
-            pf.init(sense_x, sense_y, sense_theta);
+            pf.init(sense_x, sense_y, sense_theta, sigma_pos);
           }
           else
           {
@@ -83,7 +84,7 @@ int main()
             double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
             double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
-            pf.prediction(delta_t, previous_velocity, previous_yawrate);
+            pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
           }
 
           // receive noisy observation data from the simulator
