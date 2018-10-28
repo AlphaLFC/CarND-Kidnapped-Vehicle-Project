@@ -63,10 +63,10 @@ void ParticleFilter::init(double x, double y, double theta, double pos_std[])
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 	// this->update_pos_std(pos_std);
 
-	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
-	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	 // GPS measurement uncertainty x [m]
+	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	 // GPS measurement uncertainty y [m]
 	normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
-	default_random_engine gen; 
+	default_random_engine gen;
 
 	for (int i = 0; i < this->num_particles; i++)
 	{
@@ -84,11 +84,11 @@ void ParticleFilter::prediction(double delta_t, double pos_std[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-	
-	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	  // GPS measurement uncertainty x [m]
-	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	  // GPS measurement uncertainty y [m]
+
+	normal_distribution<double> gaussian_x(0.0, pos_std[0]);	 // GPS measurement uncertainty x [m]
+	normal_distribution<double> gaussian_y(0.0, pos_std[1]);	 // GPS measurement uncertainty y [m]
 	normal_distribution<double> gaussian_theta(0.0, pos_std[2]); // GPS measurement uncertainty theta [rad]
-	default_random_engine gen; 
+	default_random_engine gen;
 
 	for (int i = 0; i < this->num_particles; i++)
 	{
@@ -117,6 +117,38 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
+	std::vector<double> probs = std::vector<double>();
+
+	for (size_t i = 0; i < this->particles.size(); i++)
+	{
+		double prob = 0.0;
+		for (size_t j = 0; j < observations.size(); j++)
+		{
+			double obs_range = sqrt(observations[j].x * observations[j].x + observations[j].y * observations[j].y);
+			if ( obs_range > sensor_range ) 
+			{
+				continue;
+			}
+			LandmarkObs obs_g_pos = affine_transform(observations[j], this->particles[i].theta, 
+													 this->particles[i].x, this->particles[i].y);
+			
+			std::vector<bool> associated = std::vector<bool>(false, map_landmarks.landmark_list.size());
+			double min_dist = 999999999;
+			double min_landmark_idx = -1;
+			for(size_t m = 0; m < map_landmarks.landmark_list.size(); m++)
+			{
+				double d = dist(obs_g_pos.x, obs_g_pos.y, map_landmarks.landmark_list[m].x_f, 
+				                map_landmarks.landmark_list[m].y_f);
+				if (d < min_dist) {
+					min_dist = d;
+					min_landmark_idx = m;
+				}
+			}
+			associated[min_landmark_idx] = true;
+
+			// TODO: use something like normpdf to calculate the prob of observation and the associated landmark.
+		}
+	}
 }
 
 void ParticleFilter::resample()

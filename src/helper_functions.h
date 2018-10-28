@@ -46,7 +46,43 @@ struct LandmarkObs {
 	int id;				// Id of matching landmark in the map.
 	double x;			// Local (vehicle coordinates) x position of landmark observation [m]
 	double y;			// Local (vehicle coordinates) y position of landmark observation [m]
+
+	LandmarkObs() {}
+
+	LandmarkObs(int id, double x, double y) 
+	{
+		this->id = id;
+		this->x = x;
+		this->y = y;
+	}
 };
+
+/*
+ * Does the affine transformation (namely, a rotation then a translation) for a given point.
+ * @param pt is the point to be transformed, whose position is given in the local coord-system.
+ * @param angle is the included angle from local coord-system axis to global coord-system axis. (in rad)
+ * @param (x_t, y_t) is the vector the point need to be translate after rotation, will be done in global coord-system.
+ * @output transformed point.
+ */
+inline LandmarkObs affine_transform(const LandmarkObs& pt, double angle, double x_t, double y_t) {
+	double x_g = pt.x * cos(angle) - pt.y * sin(angle);
+	double y_g = pt.x * sin(angle) + pt.y * cos(angle);
+	return LandmarkObs(pt.id, x_g + x_t, y_g + y_t);
+}
+
+//definition of one over square root of 2*pi:
+float STATIC_ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ;
+float ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ;
+
+/*****************************************************************************
+ * normpdf(X,mu,sigma) computes the probability function at values x using the
+ * normal distribution with mean mu and standard deviation std. x, mue and 
+ * sigma must be scalar! The parameter std must be positive. 
+ * The normal pdf is y=f(x;mu,std)= 1/(std*sqrt(2pi)) e[ -(x−mu)^2 / 2*std^2 ]
+*****************************************************************************/
+static float normpdf(float x, float mu, float std) {
+	return (STATIC_ONE_OVER_SQRT_2PI/std)*exp(-0.5*pow((x-mu)/std,2));
+}
 
 /*
  * Computes the Euclidean distance between two 2D points.
