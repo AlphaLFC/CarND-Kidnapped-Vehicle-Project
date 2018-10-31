@@ -121,7 +121,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	for (size_t i = 0; i < this->particles.size(); i++)
 	{
-		double prob = 0.0;
+		double prob = 1.0;
+		std::vector<bool> associated = std::vector<bool>(false, map_landmarks.landmark_list.size());
 		for (size_t j = 0; j < observations.size(); j++)
 		{
 			double obs_range = sqrt(observations[j].x * observations[j].x + observations[j].y * observations[j].y);
@@ -132,11 +133,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			LandmarkObs obs_g_pos = affine_transform(observations[j], this->particles[i].theta, 
 													 this->particles[i].x, this->particles[i].y);
 			
-			std::vector<bool> associated = std::vector<bool>(false, map_landmarks.landmark_list.size());
 			double min_dist = 999999999;
 			double min_landmark_idx = -1;
 			for(size_t m = 0; m < map_landmarks.landmark_list.size(); m++)
 			{
+                if (associated[m]) 
+                {
+                    continue;
+                }
+
 				double d = dist(obs_g_pos.x, obs_g_pos.y, map_landmarks.landmark_list[m].x_f, 
 				                map_landmarks.landmark_list[m].y_f);
 				if (d < min_dist) {
@@ -146,7 +151,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			}
 			associated[min_landmark_idx] = true;
 
-			// TODO: use something like normpdf to calculate the prob of observation and the associated landmark.
+			// TODO: use normpdf to calculate the prob of observation and the associated landmark.
+            // prob *= normpdf(min_dist, , std_landmark[])
 		}
 	}
 }
