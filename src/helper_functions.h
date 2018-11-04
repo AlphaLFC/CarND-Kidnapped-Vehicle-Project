@@ -84,7 +84,7 @@ inline LandmarkObs affine_transform(const LandmarkObs& pt, double angle, double 
 /* 	return (STATIC_ONE_OVER_SQRT_2PI/std)*exp(-0.5*pow((x-mu)/std,2)); */
 /* } */
 
-inline float normpdf2d(float x, float y, float mu_x, float mu_y, float std_x, float std_y) {
+inline double normpdf2d(float x, float y, float mu_x, float mu_y, float std_x, float std_y) {
     float gauss_norm = 1 / (2 * M_PI * std_x * std_y);
     float exponent = ((x - mu_x) * (x - mu_x)) / (2 * std_x * std_x) + ((y - mu_y) * (y - mu_y)) / (2 * std_y * std_y);
     return gauss_norm * exp(-exponent);

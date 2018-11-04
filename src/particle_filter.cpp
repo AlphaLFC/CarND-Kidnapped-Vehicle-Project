@@ -110,7 +110,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     const std::vector<Map::single_landmark_s>& lms = map_landmarks.landmark_list; 
     float sum_weights = 0.0;
 
-	for (size_t i = 0; i < this->particles.size(); i++)
+    std::cout << "weights before update:" << "\n";
+    for (int i = 0; i < this->num_particles; i++) {
+        std::cout << this->particles[i].weight << " ";
+    }
+    std::cout << "\n";
+
+	for (int i = 0; i < this->num_particles; i++)
 	{
 		double prob = 1.0;
 		std::vector<bool> associated = std::vector<bool>(false, lms.size());
@@ -149,9 +155,16 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         sum_weights += prob;
 	}
 
-    for (size_t i = 0; i < this->particles.size(); i++) {
-        this->particles[i].weight /= sum_weights;
+    std::cout << "weights after update:" << "\n";
+    for (int i = 0; i < this->num_particles; i++) {
+        std::cout << this->particles[i].weight << " ";
     }
+    std::cout << "\n";
+
+    for (int i = 0; i < this->num_particles; i++) {
+        this->particles[i].weight /= (sum_weights + 0.000001);
+    }
+
 }
 
 void ParticleFilter::resample()
@@ -160,21 +173,36 @@ void ParticleFilter::resample()
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
     std::default_random_engine gen;
-    std::vector<float> weights;
+    std::vector<double> weights;
     std::vector<Particle> new_particles;
     std::discrete_distribution<> d(weights.begin(), weights.end());
     
-    for (size_t i = 0; i < this->particles.size(); i++) {
+    for (int i = 0; i < this->num_particles; i++) {
         weights.push_back(this->particles[i].weight);
     }
     
-    for (size_t i = 0; i < this->particles.size(); i++) {
+    std::cout << "normalized weights:" << "\n";
+    for (size_t i = 0; i < weights.size(); i++) {
+        std::cout << weights[i] << " ";
+    }
+    std::cout << "\n";
+
+    std::cout << "random picked indexes:" << "\n";
+    for (int i = 0; i < this->num_particles; i++) {
         int random_gen_idx = d(gen);
         new_particles.push_back(this->particles[random_gen_idx]);
+        std::cout << random_gen_idx << " ";
     }
+    std::cout << "\n";
 
     this->particles.clear();
     this->particles = new_particles;
+
+    std::cout << "weights after resampling:" << "\n";
+    for (int i = 0; i < this->num_particles; i++) {
+        std::cout << this->particles[i].weight << " ";
+    }
+    std::cout << "\n";
 }
 
 void ParticleFilter::SetAssociations(Particle &particle, const std::vector<int> &associations,

@@ -54,7 +54,7 @@ class ParticleFilter
 	bool is_initialized;
 
 	// Vector of weights of all particles
-	std::vector<double> weights;
+	// std::vector<double> weights;
 
   public:
 	// Set of current particles
