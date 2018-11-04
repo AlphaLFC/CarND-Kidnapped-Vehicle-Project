@@ -23,9 +23,9 @@ struct Particle
 	std::vector<double> sense_x;
 	std::vector<double> sense_y;
 
-	Particle::Particle();
+	Particle() {}
 
-	Particle::Particle(int id, double x, double y, double theta, double weight)
+	Particle(int id, double x, double y, double theta, double weight)
 	{
 		this->id = id;
 		this->x = x;
@@ -34,9 +34,9 @@ struct Particle
 		this->weight = weight;
 	}
 
-	void move(double delta_t, double velocity, double yaw_rate, normal_distribution<double>& gaussian_x, 
-	          normal_distribution<double>& gaussian_y, normal_distribution<double>& gaussian_theta, 
-			  default_random_engine& gen)
+	void move(double delta_t, double velocity, double yaw_rate, std::normal_distribution<double>& gaussian_x, 
+	          std::normal_distribution<double>& gaussian_y, std::normal_distribution<double>& gaussian_theta, 
+			  std::default_random_engine& gen)
 	{
 		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta)) + gaussian_x(gen);
 		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t)) + gaussian_y(gen);
@@ -56,19 +56,13 @@ class ParticleFilter
 	// Vector of weights of all particles
 	std::vector<double> weights;
 
-	// Create Gaussian distribution to generate gaussian noise for x, y and theta
-	// normal_distribution<double> *gaussian_x;	 // GPS measurement uncertainty x [m]
-	// normal_distribution<double> *gaussian_y;	 // GPS measurement uncertainty y [m]
-	// normal_distribution<double> *gaussian_theta; // GPS measurement uncertainty theta [rad]
-	// default_random_engine gen;
-
   public:
 	// Set of current particles
 	std::vector<Particle> particles;
 
 	// Constructor
 	// @param num_particles Number of particles
-	ParticleFilter(int num_particles) : is_initialized(false) {}
+	ParticleFilter(int num_particles) : is_initialized(false) { this->num_particles = num_particles; }
 
 	// Destructor
 	~ParticleFilter() {}
@@ -136,7 +130,7 @@ class ParticleFilter
 	 * Set a particles list of associations, along with the associations calculated world x,y coordinates
 	 * This can be a very useful debugging tool to make sure transformations are correct and assocations correctly connected
 	 */
-	Particle SetAssociations(Particle &particle, const std::vector<int> &associations,
+	void SetAssociations(Particle &particle, const std::vector<int> &associations,
 							 const std::vector<double> &sense_x, const std::vector<double> &sense_y);
 
 	std::string getAssociations(Particle best);

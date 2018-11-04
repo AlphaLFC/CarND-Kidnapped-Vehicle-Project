@@ -18,18 +18,6 @@
 
 using namespace std;
 
-ParticleFilter::ParticleFilter(int num_particles)
-{
-	this->num_particles = num_particles;
-	// this->gaussian_x = NULL;
-	// this->gaussian_y = NULL;
-	// this->gaussian_theta = NULL;
-}
-
-ParticleFilter::~ParticleFilter()
-{
-	// this->free_gaussians();
-}
 
 // void ParticleFilter::free_gaussians()
 // {
@@ -73,7 +61,7 @@ void ParticleFilter::init(double x, double y, double theta, double pos_std[])
 		double noise_x = gaussian_x(gen);
 		double noise_y = gaussian_y(gen);
 		double noise_theta = gaussian_theta(gen);
-		this->weights.push_back(1.);
+		/* this->weights.push_back(1.); */
 		this->particles.push_back(Particle(i, x + noise_x, y + noise_y, theta + noise_theta, 1.));
 	}
 }
@@ -118,43 +106,52 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 	std::vector<double> probs = std::vector<double>();
+    const std::vector<LandmarkObs>& obsvs = observations;
+    const std::vector<Map::single_landmark_s>& lms = map_landmarks.landmark_list; 
+    float sum_weights = 0.0;
 
 	for (size_t i = 0; i < this->particles.size(); i++)
 	{
 		double prob = 1.0;
-		std::vector<bool> associated = std::vector<bool>(false, map_landmarks.landmark_list.size());
-		for (size_t j = 0; j < observations.size(); j++)
+		std::vector<bool> associated = std::vector<bool>(false, lms.size());
+		for (size_t j = 0; j < obsvs.size(); j++)
 		{
-			double obs_range = sqrt(observations[j].x * observations[j].x + observations[j].y * observations[j].y);
+			double obs_range = sqrt(obsvs[j].x * obsvs[j].x + obsvs[j].y * obsvs[j].y);
 			if ( obs_range > sensor_range ) 
 			{
 				continue;
 			}
-			LandmarkObs obs_g_pos = affine_transform(observations[j], this->particles[i].theta, 
+			LandmarkObs obs_g_pos = affine_transform(obsvs[j], this->particles[i].theta, 
 													 this->particles[i].x, this->particles[i].y);
 			
 			double min_dist = 999999999;
-			double min_landmark_idx = -1;
-			for(size_t m = 0; m < map_landmarks.landmark_list.size(); m++)
+			double min_lm_idx = -1;
+			for(size_t m = 0; m < lms.size(); m++)
 			{
                 if (associated[m]) 
                 {
                     continue;
                 }
 
-				double d = dist(obs_g_pos.x, obs_g_pos.y, map_landmarks.landmark_list[m].x_f, 
-				                map_landmarks.landmark_list[m].y_f);
+				double d = dist(obs_g_pos.x, obs_g_pos.y, lms[m].x_f, 
+				                lms[m].y_f);
 				if (d < min_dist) {
 					min_dist = d;
-					min_landmark_idx = m;
+					min_lm_idx = m;
 				}
 			}
-			associated[min_landmark_idx] = true;
+			associated[min_lm_idx] = true;
 
 			// TODO: use normpdf to calculate the prob of observation and the associated landmark.
-            // prob *= normpdf(min_dist, , std_landmark[])
+            prob *= normpdf2d(obs_g_pos.x, obs_g_pos.y, lms[min_lm_idx].x_f, lms[min_lm_idx].y_f, std_landmark[0], std_landmark[1]);
 		}
+        this->particles[i].weight = prob;
+        sum_weights += prob;
 	}
+
+    for (size_t i = 0; i < this->particles.size(); i++) {
+        this->particles[i].weight /= sum_weights;
+    }
 }
 
 void ParticleFilter::resample()
@@ -162,9 +159,25 @@ void ParticleFilter::resample()
 	// TODO: Resample particles with replacement with probability proportional to their weight.
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+    std::default_random_engine gen;
+    std::vector<float> weights;
+    std::vector<Particle> new_particles;
+    std::discrete_distribution<> d(weights.begin(), weights.end());
+    
+    for (size_t i = 0; i < this->particles.size(); i++) {
+        weights.push_back(this->particles[i].weight);
+    }
+    
+    for (size_t i = 0; i < this->particles.size(); i++) {
+        int random_gen_idx = d(gen);
+        new_particles.push_back(this->particles[random_gen_idx]);
+    }
+
+    this->particles.clear();
+    this->particles = new_particles;
 }
 
-Particle ParticleFilter::SetAssociations(Particle &particle, const std::vector<int> &associations,
+void ParticleFilter::SetAssociations(Particle &particle, const std::vector<int> &associations,
 										 const std::vector<double> &sense_x, const std::vector<double> &sense_y)
 {
 	//particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to

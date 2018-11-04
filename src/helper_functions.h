@@ -71,8 +71,8 @@ inline LandmarkObs affine_transform(const LandmarkObs& pt, double angle, double 
 }
 
 //definition of one over square root of 2*pi:
-float STATIC_ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ;
-float ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ;
+/* float STATIC_ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ; */
+/* float ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ; */
 
 /*****************************************************************************
  * normpdf(X,mu,sigma) computes the probability function at values x using the
@@ -80,8 +80,14 @@ float ONE_OVER_SQRT_2PI = 1 / sqrt(2 * M_PI) ;
  * sigma must be scalar! The parameter std must be positive. 
  * The normal pdf is y=f(x;mu,std)= 1/(std*sqrt(2pi)) e[ -(x−mu)^2 / 2*std^2 ]
 *****************************************************************************/
-static float normpdf(float x, float mu, float std) {
-	return (STATIC_ONE_OVER_SQRT_2PI/std)*exp(-0.5*pow((x-mu)/std,2));
+/* static float normpdf(float x, float mu, float std) { */
+/* 	return (STATIC_ONE_OVER_SQRT_2PI/std)*exp(-0.5*pow((x-mu)/std,2)); */
+/* } */
+
+inline float normpdf2d(float x, float y, float mu_x, float mu_y, float std_x, float std_y) {
+    float gauss_norm = 1 / (2 * M_PI * std_x * std_y);
+    float exponent = ((x - mu_x) * (x - mu_x)) / (2 * std_x * std_x) + ((y - mu_y) * (y - mu_y)) / (2 * std_y * std_y);
+    return gauss_norm * exp(-exponent);
 }
 
 /*
