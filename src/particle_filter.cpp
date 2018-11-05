@@ -18,7 +18,6 @@
 
 using namespace std;
 
-
 // void ParticleFilter::free_gaussians()
 // {
 // 	if (this->gaussian_x != NULL)
@@ -106,42 +105,45 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 	std::vector<double> probs = std::vector<double>();
-    const std::vector<LandmarkObs>& obsvs = observations;
-    const std::vector<Map::single_landmark_s>& lms = map_landmarks.landmark_list; 
-    float sum_weights = 0.0;
+	const std::vector<LandmarkObs> &obsvs = observations;
+	const std::vector<Map::single_landmark_s> &lms = map_landmarks.landmark_list;
+	float sum_weights = 0.0;
 
-    std::cout << "weights before update:" << "\n";
-    for (int i = 0; i < this->num_particles; i++) {
-        std::cout << this->particles[i].weight << " ";
-    }
-    std::cout << "\n";
+	std::cout << "weights before update:"
+			  << "\n";
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		std::cout << this->particles[i].weight << " ";
+	}
+	std::cout << "\n";
 
 	for (int i = 0; i < this->num_particles; i++)
 	{
 		double prob = 1.0;
-		std::vector<bool> associated = std::vector<bool>(false, lms.size());
+		std::vector<bool> associated = std::vector<bool>(lms.size());
 		for (size_t j = 0; j < obsvs.size(); j++)
 		{
 			double obs_range = sqrt(obsvs[j].x * obsvs[j].x + obsvs[j].y * obsvs[j].y);
-			if ( obs_range > sensor_range ) 
+			if (obs_range > sensor_range)
 			{
 				continue;
 			}
-			LandmarkObs obs_g_pos = affine_transform(obsvs[j], this->particles[i].theta, 
+			LandmarkObs obs_g_pos = affine_transform(obsvs[j], this->particles[i].theta,
 													 this->particles[i].x, this->particles[i].y);
-			
+
 			double min_dist = 999999999;
 			double min_lm_idx = -1;
-			for(size_t m = 0; m < lms.size(); m++)
+			for (size_t m = 0; m < lms.size(); m++)
 			{
-                if (associated[m]) 
-                {
-                    continue;
-                }
+				if (associated[m])
+				{
+					continue;
+				}
 
-				double d = dist(obs_g_pos.x, obs_g_pos.y, lms[m].x_f, 
-				                lms[m].y_f);
-				if (d < min_dist) {
+				double d = dist(obs_g_pos.x, obs_g_pos.y, lms[m].x_f, lms[m].y_f);
+
+				if (d < min_dist)
+				{
 					min_dist = d;
 					min_lm_idx = m;
 				}
@@ -149,22 +151,30 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			associated[min_lm_idx] = true;
 
 			// TODO: use normpdf to calculate the prob of observation and the associated landmark.
-            prob *= normpdf2d(obs_g_pos.x, obs_g_pos.y, lms[min_lm_idx].x_f, lms[min_lm_idx].y_f, std_landmark[0], std_landmark[1]);
+			double p = normpdf2d(obs_g_pos.x, obs_g_pos.y, lms[min_lm_idx].x_f, lms[min_lm_idx].y_f, std_landmark[0], std_landmark[1]);
+			prob *= p;
+
+			/* std::cout << "particle[" << i << "] " */
+			/* 		  << "obsv " << j << "(" << obs_g_pos.x << "," << obs_g_pos.y << ") associated to " */ 
+			/* 		  << min_lm_idx << "(" << lms[min_lm_idx].x_f << "," << lms[min_lm_idx].y_f << "). prob=" << p << "\n"; */
 		}
-        this->particles[i].weight = prob;
-        sum_weights += prob;
+		std::cout << "particle[" << i << "] total prob=" << prob << "\n";
+		this->particles[i].weight = prob;
+		sum_weights += prob;
 	}
 
-    std::cout << "weights after update:" << "\n";
-    for (int i = 0; i < this->num_particles; i++) {
-        std::cout << this->particles[i].weight << " ";
-    }
-    std::cout << "\n";
+	std::cout << "weights after update:"
+			  << "\n";
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		std::cout << this->particles[i].weight << " ";
+	}
+	std::cout << "\n";
 
-    for (int i = 0; i < this->num_particles; i++) {
-        this->particles[i].weight /= (sum_weights + 0.000001);
-    }
-
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		this->particles[i].weight /= sum_weights;
+	}
 }
 
 void ParticleFilter::resample()
@@ -172,41 +182,49 @@ void ParticleFilter::resample()
 	// TODO: Resample particles with replacement with probability proportional to their weight.
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-    std::default_random_engine gen;
-    std::vector<double> weights;
-    std::vector<Particle> new_particles;
-    std::discrete_distribution<> d(weights.begin(), weights.end());
-    
-    for (int i = 0; i < this->num_particles; i++) {
-        weights.push_back(this->particles[i].weight);
-    }
-    
-    std::cout << "normalized weights:" << "\n";
-    for (size_t i = 0; i < weights.size(); i++) {
-        std::cout << weights[i] << " ";
-    }
-    std::cout << "\n";
+	std::default_random_engine gen;
+	std::vector<double> weights;
+	std::vector<Particle> new_particles;
 
-    std::cout << "random picked indexes:" << "\n";
-    for (int i = 0; i < this->num_particles; i++) {
-        int random_gen_idx = d(gen);
-        new_particles.push_back(this->particles[random_gen_idx]);
-        std::cout << random_gen_idx << " ";
-    }
-    std::cout << "\n";
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		weights.push_back(this->particles[i].weight);
+	}
 
-    this->particles.clear();
-    this->particles = new_particles;
+	std::discrete_distribution<> d(weights.begin(), weights.end());
 
-    std::cout << "weights after resampling:" << "\n";
-    for (int i = 0; i < this->num_particles; i++) {
-        std::cout << this->particles[i].weight << " ";
-    }
-    std::cout << "\n";
+	std::cout << "normalized weights:"
+			  << "\n";
+	for (size_t i = 0; i < weights.size(); i++)
+	{
+		std::cout << weights[i] << " ";
+	}
+	std::cout << "\n";
+
+	std::cout << "random picked indexes:"
+			  << "\n";
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		int random_gen_idx = d(gen);
+		new_particles.push_back(this->particles[random_gen_idx]);
+		std::cout << random_gen_idx << " ";
+	}
+	std::cout << "\n";
+
+	this->particles.clear();
+	this->particles = new_particles;
+
+	std::cout << "weights after resampling:"
+			  << "\n";
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		std::cout << this->particles[i].weight << " ";
+	}
+	std::cout << "\n";
 }
 
 void ParticleFilter::SetAssociations(Particle &particle, const std::vector<int> &associations,
-										 const std::vector<double> &sense_x, const std::vector<double> &sense_y)
+									 const std::vector<double> &sense_x, const std::vector<double> &sense_y)
 {
 	//particle: the particle to assign each listed association, and association's (x,y) world coordinates mapping to
 	// associations: The landmark id that goes along with each listed association
