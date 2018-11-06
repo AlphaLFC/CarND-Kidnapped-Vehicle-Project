@@ -35,7 +35,7 @@ int main()
   //Set up parameters here
   double delta_t = 0.1;     // Time elapsed between measurements [sec]
   double sensor_range = 50; // Sensor range [m]
-  int num_particles = 10;
+  int num_particles = 7;
 
   double sigma_pos[3] = {0.3, 0.3, 0.01}; // GPS measurement uncertainty [x [m], y [m], theta [rad]]
   double sigma_landmark[2] = {0.3, 0.3};  // Landmark measurement uncertainty [x [m], y [m]]
@@ -84,6 +84,7 @@ int main()
             double previous_velocity = std::stod(j[1]["previous_velocity"].get<std::string>());
             double previous_yawrate = std::stod(j[1]["previous_yawrate"].get<std::string>());
 
+            /* std::cout << "previous_velocity: " << previous_velocity << ", previous_yawrate: " << previous_yawrate << "\n"; */
             pf.prediction(delta_t, sigma_pos, previous_velocity, previous_yawrate);
           }
 
@@ -150,6 +151,8 @@ int main()
           auto msg = "42[\"best_particle\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+
+          /* std::cout << "---------------------------------------------------------------------\n"; */
         }
       }
       else

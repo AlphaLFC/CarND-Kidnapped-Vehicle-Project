@@ -38,8 +38,8 @@ struct Particle
 	          std::normal_distribution<double>& gaussian_y, std::normal_distribution<double>& gaussian_theta, 
 			  std::default_random_engine& gen)
 	{
-		this->x += velocity / yaw_rate * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta)) + gaussian_x(gen);
-		this->y += velocity / yaw_rate * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t)) + gaussian_y(gen);
+		this->x += velocity / (yaw_rate + 1e-6) * (sin(this->theta + yaw_rate * delta_t) - sin(this->theta)) + gaussian_x(gen);
+		this->y += velocity / (yaw_rate + 1e-6) * (cos(this->theta) - cos(this->theta + yaw_rate * delta_t)) + gaussian_y(gen);
 		this->theta += yaw_rate * delta_t + gaussian_theta(gen);
 	}
 };
