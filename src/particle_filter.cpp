@@ -128,52 +128,43 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	/* 	std::cout << this->particles[i].weight << " "; */
 	/* } */
 	/* std::cout << "\n"; */
-    std::vector<std::vector<LandmarkObs>> obs_g_pos;
-    for (int i = 0; i < this->num_particles; i++) {
-        obs_g_pos.push_back(std::vector<LandmarkObs>());
-        for (size_t j = 0; j < obsvs.size(); j++) {
+
+	for (int i = 0; i < this->num_particles; i++)
+	{
+		double prob = 1.0;
+		for (size_t j = 0; j < obsvs.size(); j++)
+		{
 			double obs_range = sqrt(obsvs[j].x * obsvs[j].x + obsvs[j].y * obsvs[j].y);
 			if (obs_range > sensor_range)
 			{
 				continue;
 			}
-		    obs_g_pos[i].push_back(affine_transform(obsvs[j], this->particles[i].theta, this->particles[i].x, this->particles[i].y));
-        }
-    }
+		    LandmarkObs obs_g_pos = affine_transform(obsvs[j], this->particles[i].theta, this->particles[i].x, this->particles[i].y);
 
-    // Use the first particle's global observation position to find the associated landmarks to accelerate the calculation.
-    std::vector<int> associations;
-	std::vector<bool> associated = std::vector<bool>(lms.size());
-    for (size_t i = 0; i < obs_g_pos[0].size(); i++) {
-		double min_dist = 999999999;
-		double min_lm_idx = -1;
-		for (size_t m = 0; m < lms.size(); m++)
-		{
-			if (associated[m])
-			{
-				continue;
-			}
-			double d = dist(obs_g_pos[0][i].x, obs_g_pos[0][i].y, lms[m].x_f, lms[m].y_f);
+            std::vector<bool> associated = std::vector<bool>(lms.size());
+            double min_dist = 999999999;
+            double min_lm_idx = -1;
+            for (size_t m = 0; m < lms.size(); m++)
+            {
+                if (associated[m])
+                {
+                    continue;
+                }
+                double d = dist(obs_g_pos.x, obs_g_pos.y, lms[m].x_f, lms[m].y_f);
 
-			if (d < min_dist)
-			{
-				min_dist = d;
-				min_lm_idx = m;
-			}
-		}
-		associated[min_lm_idx] = true;
-        associations.push_back(min_lm_idx);
-		/* std::cout << "obsv " << i << "(" << obs_g_pos[0][i].x << "," << obs_g_pos[0][i].y << ") associated to " */ 
-		/* 		  << min_lm_idx << "(" << lms[min_lm_idx].x_f << "," << lms[min_lm_idx].y_f << ")\n"; */
-    }
+                if (d < min_dist)
+                {
+                    min_dist = d;
+                    min_lm_idx = m;
+                }
+            }
+            associated[min_lm_idx] = true;
 
-	for (size_t i = 0; i < obs_g_pos.size(); i++)
-	{
-		double prob = 1.0;
-		for (size_t j = 0; j < obs_g_pos[i].size(); j++)
-		{
+                /* std::cout << "obsv " << i << "(" << obs_g_pos[0][i].x << "," << obs_g_pos[0][i].y << ") associated to " */ 
+                /* 		  << min_lm_idx << "(" << lms[min_lm_idx].x_f << "," << lms[min_lm_idx].y_f << ")\n"; */
+
 			// TODO: use normpdf to calculate the prob of observation and the associated landmark.
-			double p = normpdf2d(obs_g_pos[i][j].x, obs_g_pos[i][j].y, lms[associations[j]].x_f, lms[associations[j]].y_f, std_landmark[0], std_landmark[1]);
+			double p = normpdf2d(obs_g_pos.x, obs_g_pos.y, lms[min_lm_idx].x_f, lms[min_lm_idx].y_f, std_landmark[0], std_landmark[1]);
 			prob *= p;
 
 		}
